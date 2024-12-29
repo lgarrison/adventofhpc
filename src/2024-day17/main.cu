@@ -50,18 +50,19 @@ int main(){
     uint64_t progress = 0;
     auto last = std::chrono::high_resolution_clock::now();
     for(uint64_t i = 0; answer == ULLONG_MAX; i += iterations_per_grid){
-        compute<<<BLOCKS_PER_GRID, THREADS_PER_BLOCK>>>(i);
-        cudaDeviceSynchronize();
 
-        if (i - progress > 0.01 * 90938893795561LLU){
+        if (i - progress > 2e12){
             auto now = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - last).count();
-            auto rate = (double) (i - progress) / duration;
+            std::chrono::duration<double> duration = now - last;
+            auto rate = (double) (i - progress) / duration.count();
             printf("rate: %.4g T/sec\n", rate / 1e12);
 
             progress = i;
             last = now;
         }
+
+        compute<<<BLOCKS_PER_GRID, THREADS_PER_BLOCK>>>(i);
+        cudaDeviceSynchronize();
     }
 
     printf("answer: %llu\n", answer);
