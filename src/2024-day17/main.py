@@ -65,9 +65,8 @@ extern "C" __global__ void compute(uint64_t start, unsigned long long *answer){
 
 
 def get_jit_kernel():
-    # XXX this currently doesn't work, as cupy jit doesn't support
-    # indexing arrays with non-constants
-    target = cp.array([2, 4, 1, 6, 7, 5, 4, 6, 1, 4, 5, 5, 0, 3, 3, 0], dtype=cp.uint8)
+    # XXX cupy jit doesn't support indexing arrays with non-constants
+    # target = cp.array([2, 4, 1, 6, 7, 5, 4, 6, 1, 4, 5, 5, 0, 3, 3, 0], dtype=cp.uint8)
 
     @jit.rawkernel()
     def kernel(start, answer):
@@ -76,25 +75,76 @@ def get_jit_kernel():
         Astart = start + ITERATIONS_PER_THREAD * tid
         Aend = start + ITERATIONS_PER_THREAD * (tid + 1)
 
+        TARGET_SIZE = 16
+
         for Aseed in range(Astart, Aend):
             A = Aseed
             i = 0
-            while i < target.size and A != 0:
+            while i < TARGET_SIZE and A != 0:
                 B = A & 0b111
                 B ^= 0b110
                 C = A >> B
                 B ^= C
                 B ^= 0b100
                 out = B & 0b111
-
-                if out != target[i]:
-                    break
-
+                
                 A = A >> 3
+
+                # if out != target[i]:
+                #     break
+                if i == 0:
+                    if out != 2:
+                        i = TARGET_SIZE + 1
+                elif i == 1:
+                    if out != 4:
+                        i = TARGET_SIZE + 1
+                elif i == 2:
+                    if out != 1:
+                        i = TARGET_SIZE + 1
+                elif i == 3:
+                    if out != 6:
+                        i = TARGET_SIZE + 1
+                elif i == 4:
+                    if out != 7:
+                        i = TARGET_SIZE + 1
+                elif i == 5:
+                    if out != 5:
+                        i = TARGET_SIZE + 1
+                elif i == 6:
+                    if out != 4:
+                        i = TARGET_SIZE + 1
+                elif i == 7:
+                    if out != 6:
+                        i = TARGET_SIZE + 1
+                elif i == 8:
+                    if out != 1:
+                        i = TARGET_SIZE + 1
+                elif i == 9:
+                    if out != 4:
+                        i = TARGET_SIZE + 1
+                elif i == 10:
+                    if out != 5:
+                        i = TARGET_SIZE + 1
+                elif i == 11:
+                    if out != 5:
+                        i = TARGET_SIZE + 1
+                elif i == 12:
+                    if out != 0:
+                        i = TARGET_SIZE + 1
+                elif i == 13:
+                    if out != 3:
+                        i = TARGET_SIZE + 1
+                elif i == 14:
+                    if out != 3:
+                        i = TARGET_SIZE + 1
+                elif i == 15:
+                    if out != 0:
+                        i = TARGET_SIZE + 1
+
                 i += 1
 
-            if i == target.size:
-                jit.atomic_min(answer, Aseed)
+            if i == TARGET_SIZE:
+                jit.atomic_min(answer, 0, Aseed)
 
     return kernel
 
